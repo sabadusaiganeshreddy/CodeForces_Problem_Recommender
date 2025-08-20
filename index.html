@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CodeForces Problem Recommender</title>
+  <style>
+    :root {
+      --primary: #64748b;
+      --primary-dark: #475569;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #334155;
+      --text-light: #64748b;
+      --error: #dc2626;
+      --success: #059669;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 12px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 95vw;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 10px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 24px;
+      color: var(--primary);
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s ease;
+      width: 100%;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1.1em;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 0.95em;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      background: var(--surface);
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: end;
+    }
+
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--surface);
+      font-size: 0.9em;
+    }
+
+    .checkbox-item:hover {
+      background: #f1f5f9;
+      border-color: var(--primary);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      margin: 0;
+      width: 16px;
+      height: 16px;
+    }
+
+    .checkbox-item input[type="checkbox"]:checked + span {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status {
+      color: var(--text-light);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status.loading::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .status.error {
+      color: var(--error);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-panel {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--error);
+      padding: 16px;
+      border-radius: 12px;
+      margin: 16px 0;
+      display: none;
+    }
+
+    .error-panel.show {
+      display: block;
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .stat-item {
+      background: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.85em;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+
+    .problems-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .problem-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+     
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 4px solid var(--primary);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .problem-info {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .problem-title {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .problem-meta {
+      font-size: 0.9em;
+      color: var(--text-light);
+    }
+
+    .problem-link {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .problem-link:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Enhanced styling for profile and recommendation content from API */
+    #profile {
+      overflow: hidden;
+    }
+
+    #profile p {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+
+    #profile strong {
+      display: inline-block;
+      min-width: 180px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Create a stats grid from the profile data */
+    .profile-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .profile-stat {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 16px 20px;
+      border-radius: 12px;
+      text-align: center;
+      border-left: 4px solid var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    .profile-stat-value {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .profile-stat-label {
+      font-size: 0.9em;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    /* Style the problems section for better layout */
+    #recs {
+      overflow: hidden;
+      width: 100%;
+    }
+
+    #recs > * {
+      width: 100% !important;
+      max-width: none !important;
+    }
+
+    #recs .card-header {
+      width: 100% !important;
+    }
+
+    #recs div,
+    #recs p,
+    #recs h1,
+    #recs h2,
+    #recs h3,
+    #recs h4,
+    #recs h5,
+    #recs h6 {
+      width: 100% !important;
+      max-width: none !important;
+      box-sizing: border-box !important;
+    }
+
+    .problem-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 12px 0;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border-left: 4px solid var(--primary);
+      width: 100% !important;
+      max-width: none !important;
+      display: block !important;
+      box-sizing: border-box !important;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .problem-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .problem-title {
+      font-size: 1.2em;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .problem-rating {
+      background: var(--primary);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .problem-description {
+      color: var(--text-light);
+      margin: 8px 0 16px 0;
+      line-height: 1.6;
+    }
+
+    .problem-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .problem-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .problem-tag {
+      background: #e2e8f0;
+      color: var(--text);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 500;
+    }
+
+    .problem-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Override default link styling in recommendations */
+    #recs a {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+      color: white !important;
+      padding: 6px 12px !important;
+      border-radius: 6px !important;
+      text-decoration: none !important;
+      font-weight: 500 !important;
+      font-size: 0.8em !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0px !important;
+      transition: all 0.2s ease !important;
+      border: none !important;
+      box-shadow: 0 1px 2px rgba(100, 116, 139, 0.2) !important;
+    }
+
+    #recs a:hover {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #334155 100%) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 4px rgba(100, 116, 139, 0.3) !important;
+    }
+
+    #recs a:before {
+      content: '';
+      margin-right: 0px;
+    }
+
+    /* Remove arrow symbols from solve buttons */
+    #recs a:after {
+      content: '' !important;
+    }
+
+    /* Remove any arrow text content */
+    #recs a {
+      text-indent: 0 !important;
+    }
+
+    /* Hide arrow symbols by targeting common arrow characters */
+    #recs a::before,
+    #recs a::after {
+      content: '' !important;
+      display: none !important;
+    }
+
+    /* Remove arrow text that might be in the link text */
+    #recs a[href] {
+      white-space: nowrap !important;
+      overflow: hidden !important;
+    }
+
+    /* Target specific arrow characters in content */
+    #recs a {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    /* Remove common arrow symbols from button text */
+    #recs a:contains('→'),
+    #recs a:contains('➜'),
+    #recs a:contains('▶'),
+    #recs a:contains('⟶') {
+      font-size: 0 !important;
+    }
+
+    #recs a:contains('→')::after,
+    #recs a:contains('➜')::after,
+    #recs a:contains('▶')::after,
+    #recs a:contains('⟶')::after {
+      content: 'Solve' !important;
+      font-size: 0.8em !important;
+    }
+
+    /* Hide duplicate headers that come from API content */
+    #profile .card-header ~ h1,
+    #profile .card-header ~ h2,
+    #profile .card-header ~ h3 {
+      display: none !important;
+    }
+
+    #recs .card-header ~ h1,
+    #recs .card-header ~ h2,
+    #recs .card-header ~ h3 {
+      display: none !important;
+    }
+
+    /* Hide any duplicate headers that might appear as first children */
+    #profile > h1:first-child,
+    #profile > h2:first-child,
+    #profile > h3:first-child {
+      display: none !important;
+    }
+
+    #recs > h1:first-child,
+    #recs > h2:first-child,
+    #recs > h3:first-child {
+      display: none !important;
+    }
+    #profile > div:first-child,
+    #recs > div:first-child {
+      margin-top: 0;
+    }
+
+    #profile > div:last-child,
+    #recs > div:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Ensure consistent spacing */
+    #profile,
+    #recs {
+      margin: 0;
+    }
+
+    #profile .card-header,
+    #recs .card-header {
+      margin-bottom: 16px;
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .topics-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+
+      .checkbox-item {
+        padding: 6px 10px;
+        font-size: 0.85em;
+      }
+
+      .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        justify-content: center;
+      }
+
+      .problem-item {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+
+      .problem-link {
+        align-self: center;
+        width: fit-content;
+      }
+
+      .profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .checkbox-item {
+        justify-content: center;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --border: #334155;
+        --text: #e2e8f0;
+        --text-light: #94a3b8;
+      }
+
+      .stat-item {
+        background: #334155;
+      }
+
+      .problem-item {
+        background: #334155;
+      }
+
+      .checkbox-item:hover {
+        background: #334155;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏆 CodeForces Problem Recommender</h1>
+
+    <div class="card">
+      <div class="card-header">
+        🔧 Configuration
+      </div>
+
+      <div class="form-group">
+        <label for="username">👤 CodeForces Username</label>
+        <input id="username" type="text" placeholder="e.g. tourist, jiangly, SaiGaneshReddy" />
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label for="count">📊 Number of Problems</label>
+          <input id="count" type="number" min="1" max="15" step="1" value="5" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>🏷️ Topics of Interest (optional)</label>
+        <div id="topics" class="topics-grid"></div>
+      </div>
+
+      <div class="action-bar">
+        <button id="run">
+          🚀 Get Personalized Recommendations
+        </button>
+        <div id="status" class="status"></div>
+      </div>
+    </div>
+
+    <div id="error" class="error-panel"></div>
+    <div id="profile" class="card" style="display: none;"></div>
+    <div id="recs" class="card" style="display: none;"></div>
+  </div>
+  <!-- Markdown renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Your external JS (module) -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
