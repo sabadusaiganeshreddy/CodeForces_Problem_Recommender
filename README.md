@@ -7,14 +7,12 @@ A clean, frontend-only (HTML/CSS/JS) UI that calls a Hugging Face Space (Gradio)
 
 - Personalized recommendations by Codeforces handle
 - Optional topic filters (graphs, DP, math, etc.)
-- Responsive 2-column layout (config left • results right)
-- Markdown → HTML rendering for the profile panel
 - Pure static assets (HTML/CSS/JS)
 
 ## 🧱 Tech Stack
 
 - Vanilla HTML/CSS/JS
-- [`@gradio/client`](https://www.npmjs.com/package/@gradio/client) (CDN) to call your Space from the browser
+- [`@gradio/client`](https://www.npmjs.com/package/@gradio/client) (CDN) to call  Space from the browser
 - [`marked.js`](https://github.com/markedjs/marked) to render Markdown returned by the Space
 
 ## 📁 Structure
@@ -32,7 +30,7 @@ A clean, frontend-only (HTML/CSS/JS) UI that calls a Hugging Face Space (Gradio)
 	```js
 	// app.js
 	const SPACE = "Sai-ganesh-09/CF_Problem_Recommender";
-	const ENDPOINT = "/recommend"; // named endpoint in your Space
+	const ENDPOINT = "/recommend";
 	```
 	Prefer a named endpoint in your Space (`api_name="recommend"` on the Gradio click handler).  
 	If not named, set `ENDPOINT` to the actual route your Space exposes (e.g., `/handle_recommendation`).
@@ -90,21 +88,6 @@ A clean, frontend-only (HTML/CSS/JS) UI that calls a Hugging Face Space (Gradio)
 - The UI renders:
 	- Profile (Markdown → HTML via marked)
 	- Recommendations (HTML returned by the Space)
-
-## 🌐 Deploy
-
-Any static hosting works:
-- GitHub Pages
-- Netlify / Vercel
-- Cloudflare Pages
-- S3 + CloudFront, etc.
-
-Just serve the two files (`index.html`, `app.js`) and any `vendor/` assets if you used the CDN-free option.
-
-## 🔐 Notes on Privacy
-
-- This is frontend-only; don’t embed private tokens in the client.
-- Keep your Space public so the browser can call it directly.
 
 ## 🙏 Credits
 
